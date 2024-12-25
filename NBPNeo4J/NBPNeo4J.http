@@ -1,0 +1,6 @@
+@NBPNeo4J_HostAddress = http://localhost:5295
+
+GET {{NBPNeo4J_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
