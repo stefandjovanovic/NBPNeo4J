@@ -46,7 +46,7 @@ namespace NBPNeo4J
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                    webBuilder.UseUrls($"http://localhost:{Environment.GetEnvironmentVariable("PORT") ?? "8080"}");
+                    //webBuilder.UseUrls($"http://localhost:{Environment.GetEnvironmentVariable("PORT") ?? "8080"}");
                 });
         }
     }

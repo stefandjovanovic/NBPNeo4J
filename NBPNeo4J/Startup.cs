@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-//using NBPNeo4J.Repositories;
+using NBPNeo4J.Repositories;
+using NBPNeo4J.Services;
 using Neo4j.Driver;
 
 
