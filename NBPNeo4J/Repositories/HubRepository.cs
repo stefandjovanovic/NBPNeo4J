@@ -96,8 +96,8 @@ namespace NBPNeo4J.Repositories
             string query = @"
                 MATCH (h1:Hub { Id: $Id1 })-[r:HUB_CONNECTED_TO_HUB]->(h2:Hub { Id: $Id2 })
                 DELETE r
-                MATCH (h1:Hub { Id: $Id2 })-[r:HUB_CONNECTED_TO_HUB]->(h2:Hub { Id: $Id1 })
-                DELETE r";
+                MATCH (h3:Hub { Id: $Id2 })-[r1:HUB_CONNECTED_TO_HUB]->(h4:Hub { Id: $Id1 })
+                DELETE r1";
 
             var parameters = new
             {
@@ -176,8 +176,10 @@ namespace NBPNeo4J.Repositories
         {
             string query = @"
                 MATCH (h:Hub { Id: $Id })
+                OPTIONAL MATCH (h)-[r:HUB_CONNECTED_TO_HUB]->(connectedHub:Hub)
                 SET h.Name = $Name, h.Address = $Address, h.City = $City, h.Latitude = $Latitude, h.Longitude = $Longitude
-                RETURN h.Id AS Id, h.Name AS Name, h.Address AS Address, h.City AS City, h.Latitude AS Latitude, h.Longitude AS Longitude";
+                RETURN h.Id AS Id, h.Name AS Name, h.Address AS Address, h.City AS City, h.Latitude AS Latitude, h.Longitude AS Longitude,
+                collect(r) AS relationships, collect(connectedHub) AS connectedHubs";
 
             var parameters = new { hub.Id, hub.Name, hub.Address, hub.City, hub.Latitude, hub.Longitude };
 
@@ -186,15 +188,39 @@ namespace NBPNeo4J.Repositories
                 .WithParameters(parameters)
                 .ExecuteAsync();
 
-            return new Hub
+            var relationships = queryResults[0]["relationships"].As<List<IRelationship>>();
+            var connectedHubs = queryResults[0]["connectedHubs"].As<List<INode>>();
+
+            Hub updatedHub = new Hub
             {
                 Id = queryResults[0]["Id"].As<string>(),
                 Name = queryResults[0]["Name"].As<string>(),
                 Address = queryResults[0]["Address"].As<string>(),
                 City = queryResults[0]["City"].As<string>(),
                 Latitude = queryResults[0]["Latitude"].As<double>(),
-                Longitude = queryResults[0]["Longitude"].As<double>()
+                Longitude = queryResults[0]["Longitude"].As<double>(),
+                ConnectedHubs = new List<HubConnectedToHub<Hub>>()
             };
+
+            for (int i = 0; i < connectedHubs.Count; i++)
+            {
+                var connectedHubNode = connectedHubs[i];
+                var relationship = relationships[i];
+
+                var connectedHub = new Hub
+                {
+                    Id = connectedHubNode["Id"].As<string>(),
+                    Name = connectedHubNode["Name"].As<string>(),
+                    Address = connectedHubNode["Address"].As<string>(),
+                    City = connectedHubNode["City"].As<string>(),
+                    Latitude = connectedHubNode["Latitude"].As<double>(),
+                    Longitude = connectedHubNode["Longitude"].As<double>()
+                };
+
+                updatedHub.ConnectedHubs.Add(new HubConnectedToHub<Hub>(connectedHub, relationship["Distance"].As<double>()));
+            }
+
+            return updatedHub;
         }
 
         public async Task<List<Hub>> GetAllHubsAsync()

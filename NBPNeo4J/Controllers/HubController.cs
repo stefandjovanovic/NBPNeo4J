@@ -17,11 +17,32 @@ namespace NBPNeo4J.Controllers
             _hubService = service;
         }
 
-        [HttpPost]
-        [Route("create")]
-        public async Task<IActionResult> CreateHubAsync([FromBody] CreateHubDTO hub)
+        [HttpPost("create")]
+        public async Task<ActionResult<ReturnHubDTO>> CreateHubAsync([FromBody] CreateHubDTO hub)
         {
+            ReturnHubDTO cretedHubDTO = await _hubService.CreateHub(hub);
+            return cretedHubDTO;
+        }
+
+        [HttpPut("update/{hubId}")]
+        public async Task<ActionResult<ReturnHubDTO>> UpdateHubAsync(string hubId, [FromBody] CreateHubDTO hub)
+        {
+            ReturnHubDTO updatedHubDTO = await _hubService.UpdateHub(hubId, hub);
+            return updatedHubDTO;
+        }
+
+        [HttpDelete("delete/{hubId}")]
+        public async Task<ActionResult> DeleteHubAsync(string hubId)
+        {
+            await _hubService.DeleteHub(hubId);
             return Ok();
+        }
+
+        [HttpGet("all")]
+        public async Task<ActionResult<List<ReturnHubDTO>>> GetAllHubsAsync()
+        {
+            List<ReturnHubDTO> hubs = await _hubService.GetAllHubs();
+            return hubs;
         }
 
     }
