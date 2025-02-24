@@ -1,13 +1,11 @@
-﻿namespace NBPNeo4J.Models
+﻿namespace NBPNeo4J.DTOs
 {
-    public class Vehicle
+    public class CreateVehicleDTO
     {
-        public string? Id { get; set; }
         public string? Model { get; set; }
         public string? LicensePlateNumber { get; set; }
         public string? MotorType { get; set; }
         public int? CubicCapacity { get; set; }
         public int? Power { get; set; }
-
     }
 }

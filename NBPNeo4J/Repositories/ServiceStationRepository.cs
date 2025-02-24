@@ -24,19 +24,22 @@ namespace NBPNeo4J.Repositories
         Task<ServiceStation> UpdateServiceStationAsync(ServiceStation serviceStation);
         Task<bool> DeleteServiceStationAsync(string id);
         Task<List<ServiceStation>> GetAllServiceStationsAsync();
-        Task<List<Vehicle>> GetVehiclesOnServiceStationAsync(string id);
+        Task ConnectServiceToHub(string serviceStationId, string hubId, double distance);
+        Task<List<Vehicle>> GetVehiclesOnServiceStationAsync(string serviceId);
         //Kod dodavanja vozila na servis, potrebno je dodati i delove !!
-        Task<Vehicle> AddVehicleToServiceStationAsync(string serviceStationId, Vehicle vehicle);
+        Task<Vehicle> AddVehicleToServiceStationAsync(string serviceStationId, Vehicle vehicle, List<Part> parts, DateTime date);
         Task<Vehicle> RemoveVehicleFromServiceStationAsync(string serviceStationId, string vehicleId);
 
     }
     public class ServiceStationRepository : IServiceStationRepository
     {
         private readonly IDriver _driver;
-        
-        public ServiceStationRepository(IDriver driver)
+        private readonly IVehicleRepository _vehicleRepository;
+
+        public ServiceStationRepository(IDriver driver, IVehicleRepository vehicleRepository)
         {
             _driver = driver;
+            _vehicleRepository = vehicleRepository;
         }
 
         public async Task<ServiceStation> CreateServiceStationAsync(ServiceStation serviceStation)
@@ -188,23 +191,119 @@ namespace NBPNeo4J.Repositories
             return serviceStations;
         }
 
-
-
-        public async Task<List<Vehicle>> GetVehiclesOnServiceStationAsync(string id)
+        public async Task ConnectServiceToHub(string serviceStationId, string hubId, double distance)
         {
-            throw new NotImplementedException();
+            string query = @"
+                MATCH (s:ServiceStation { Id: $ServiceStationId }), (h:Hub { Id: $HubId })
+                CREATE (s)-[:SERVICE_CONNECTED_TO_HUB { Distance: $Distance }]->(h)";
+
+            var parameters = new
+            {
+                ServiceStationId = serviceStationId,
+                HubId = hubId,
+                Distance = distance
+            };
+
+            await _driver
+                .ExecutableQuery(query)
+                .WithParameters(parameters)
+                .ExecuteAsync();
         }
 
-        public async Task<Vehicle> AddVehicleToServiceStationAsync(string serviceStationId, Vehicle vehicle)
+
+        public async Task<List<Vehicle>> GetVehiclesOnServiceStationAsync(string serviceId)
         {
-            throw new NotImplementedException();
+            string query = @"
+                MATCH (s:ServiceStation { Id: $ServiceId })-[:SERVICE_HAS_CAR]->(v:Vehicle)
+                RETURN v.Id AS Id, v.Model AS Model, v.LicensePlateNumber AS LicensePlateNumber, 
+                       v.MotorType AS MotorType, v.CubicCapacity AS CubicCapacity, v.Power AS Power";
+
+            var parameters = new { ServiceId = serviceId };
+
+            var (queryResults, _) = await _driver
+                .ExecutableQuery(query)
+                .WithParameters(parameters)
+                .ExecuteAsync();
+
+            return queryResults
+                .Select(v => new Vehicle
+                {
+                    Id = v["Id"].As<string>(),
+                    Model = v["Model"].As<string>(),
+                    LicensePlateNumber = v["LicensePlateNumber"].As<string>(),
+                    MotorType = v["MotorType"].As<string>(),
+                    CubicCapacity = v["CubicCapacity"].As<int?>(),
+                    Power = v["Power"].As<int?>()
+                })
+                .ToList();
         }
+
+        public async Task<Vehicle> AddVehicleToServiceStationAsync(string serviceStationId, Vehicle vehicle, List<Part> parts, DateTime date)
+        {            
+            Vehicle createdVehicle = await _vehicleRepository.CreateVehicleAsync(vehicle);
+
+            string query = @"
+                MATCH (s:ServiceStation { Id: $ServiceStationId }), (v:Vehicle { Id: $VehicleId })
+                CREATE (s)-[:SERVICE_HAS_CAR { 
+                    Parts: $Parts, 
+                    Date: $Date 
+                }]->(v)";
+
+            var parameters = new
+            {
+                ServiceStationId = serviceStationId,
+                VehicleId = createdVehicle.Id,
+                Parts = parts.Select(p => p.ToString()).ToList(), // Assuming Part can be converted to string
+                Date = date.ToString("o") // ISO 8601 format
+            };
+
+            await _driver
+                .ExecutableQuery(query)
+                .WithParameters(parameters)
+                .ExecuteAsync();
+
+            return createdVehicle;
+        }
+
 
         public async Task<Vehicle> RemoveVehicleFromServiceStationAsync(string serviceStationId, string vehicleId)
         {
-            throw new NotImplementedException();
+            
+            string query = @"
+                MATCH (s:ServiceStation { Id: $ServiceStationId })-[r:SERVICE_HAS_CAR]->(v:Vehicle { Id: $VehicleId })
+                DELETE r
+                RETURN v.Id AS Id, v.Model AS Model, v.LicensePlateNumber AS LicensePlateNumber, 
+                       v.MotorType AS MotorType, v.CubicCapacity AS CubicCapacity, v.Power AS Power";
+
+            var parameters = new
+            {
+                ServiceStationId = serviceStationId,
+                VehicleId = vehicleId
+            };
+
+            var (queryResults, _) = await _driver
+                .ExecutableQuery(query)
+                .WithParameters(parameters)
+                .ExecuteAsync();
+
+            if (queryResults.Count == 0)
+            {
+                throw new Exception("Vehicle not found or not linked to the service station.");
+            }
+
+            
+            return new Vehicle
+            {
+                Id = queryResults[0]["Id"].As<string>(),
+                Model = queryResults[0]["Model"].As<string>(),
+                LicensePlateNumber = queryResults[0]["LicensePlateNumber"].As<string>(),
+                MotorType = queryResults[0]["MotorType"].As<string>(),
+                CubicCapacity = queryResults[0]["CubicCapacity"].As<int?>(),
+                Power = queryResults[0]["Power"].As<int?>()
+            };
         }
 
-        
+
+
     }
 }
