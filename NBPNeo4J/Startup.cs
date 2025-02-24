@@ -31,6 +31,8 @@ namespace NBPNeo4J
 
             services.AddScoped<IHubRepository, HubRepository>();
             services.AddScoped<IHubService, HubService>();
+            services.AddScoped<IServiceStationRepository, ServiceStationRepository>();
+            services.AddScoped<IServiceStationService, ServiceStationService>();
 
             services.AddSingleton(GraphDatabase.Driver(
                 Environment.GetEnvironmentVariable("NEO4J_URI"),
