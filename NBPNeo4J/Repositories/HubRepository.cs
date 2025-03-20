@@ -96,6 +96,7 @@ namespace NBPNeo4J.Repositories
             string query = @"
                 MATCH (h1:Hub { Id: $Id1 })-[r:HUB_CONNECTED_TO_HUB]->(h2:Hub { Id: $Id2 })
                 DELETE r
+                WITH h1, h2
                 MATCH (h3:Hub { Id: $Id2 })-[r1:HUB_CONNECTED_TO_HUB]->(h4:Hub { Id: $Id1 })
                 DELETE r1";
 
@@ -178,8 +179,7 @@ namespace NBPNeo4J.Repositories
                 MATCH (h:Hub { Id: $Id })
                 OPTIONAL MATCH (h)-[r:HUB_CONNECTED_TO_HUB]->(connectedHub:Hub)
                 SET h.Name = $Name, h.Address = $Address, h.City = $City, h.Latitude = $Latitude, h.Longitude = $Longitude
-                RETURN h.Id AS Id, h.Name AS Name, h.Address AS Address, h.City AS City, h.Latitude AS Latitude, h.Longitude AS Longitude,
-                collect(r) AS relationships, collect(connectedHub) AS connectedHubs";
+                RETURN h, collect(r) AS relationships, collect(connectedHub) AS connectedHubs";
 
             var parameters = new { hub.Id, hub.Name, hub.Address, hub.City, hub.Latitude, hub.Longitude };
 
@@ -188,21 +188,23 @@ namespace NBPNeo4J.Repositories
                 .WithParameters(parameters)
                 .ExecuteAsync();
 
+            var hubNode = queryResults[0]["h"].As<INode>();
             var relationships = queryResults[0]["relationships"].As<List<IRelationship>>();
             var connectedHubs = queryResults[0]["connectedHubs"].As<List<INode>>();
 
             Hub updatedHub = new Hub
             {
-                Id = queryResults[0]["Id"].As<string>(),
-                Name = queryResults[0]["Name"].As<string>(),
-                Address = queryResults[0]["Address"].As<string>(),
-                City = queryResults[0]["City"].As<string>(),
-                Latitude = queryResults[0]["Latitude"].As<double>(),
-                Longitude = queryResults[0]["Longitude"].As<double>(),
+                Id = hubNode["Id"].As<string>(),
+                Name = hubNode["Name"].As<string>(),
+                Address = hubNode["Address"].As<string>(),
+                City = hubNode["City"].As<string>(),
+                Latitude = hubNode["Latitude"].As<double>(),
+                Longitude = hubNode["Longitude"].As<double>(),
                 ConnectedHubs = new List<HubConnectedToHub<Hub>>()
             };
 
-            for (int i = 0; i < connectedHubs.Count; i++)
+            int count = Math.Min(connectedHubs.Count, relationships.Count);
+            for (int i = 0; i < count; i++)
             {
                 var connectedHubNode = connectedHubs[i];
                 var relationship = relationships[i];
