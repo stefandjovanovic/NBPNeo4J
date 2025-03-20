@@ -29,6 +29,13 @@ namespace NBPNeo4J
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
 
+            services.AddScoped<IHubRepository, HubRepository>();
+            services.AddScoped<IHubService, HubService>();
+            services.AddScoped<IServiceStationRepository, ServiceStationRepository>();
+            services.AddScoped<IServiceStationService, ServiceStationService>();
+            services.AddScoped<IVehicleRepository, VehicleRepository>();
+            services.AddScoped<IVehicleService, VehicleService>();
+
             services.AddSingleton(GraphDatabase.Driver(
                 Environment.GetEnvironmentVariable("NEO4J_URI"),
                 AuthTokens.Basic(

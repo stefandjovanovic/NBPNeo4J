@@ -135,6 +135,21 @@ namespace NBPNeo4J.Services
             //updates connections between hubs
             //first deletes all connections
 
+            if (updatedHub != null 
+                && updatedHub.Id != null
+                && updatedHub.ConnectedHubs != null 
+                && updatedHub.ConnectedHubs.Count > 0)
+            {
+                foreach (var connectedHub in updatedHub.ConnectedHubs)
+                {
+                    if(connectedHub.Target != null && connectedHub.Target.Id != null)
+                        await _hubRepository.RemoveHubConnection(updatedHub.Id, connectedHub.Target.Id);
+                }
+            }
+
+            
+
+            //create new connections
             foreach (var connectedHubId in createHubDTO.ConnectedHubsIds)
             {
                 Hub connectedHub = await _hubRepository.GetHubAsync(connectedHubId);
