@@ -1,6 +1,6 @@
 import {Injectable, OnDestroy, OnInit} from '@angular/core';
 import {HubInterface} from "../interfaces/hub.interface";
-import {HttpClient} from "@angular/common/http";
+import { HttpClient } from "@angular/common/http";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {Subject} from "rxjs";
 import {HubCreateInterface} from "../interfaces/hub-create.interface";
