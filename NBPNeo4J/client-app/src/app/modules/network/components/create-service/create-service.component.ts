@@ -5,9 +5,10 @@ import {NgForm} from "@angular/forms";
 import {ServiceCreateInterface} from "../../interfaces/service-create.interface";
 
 @Component({
-  selector: 'app-create-service',
-  templateUrl: './create-service.component.html',
-  styleUrl: './create-service.component.css'
+    selector: 'app-create-service',
+    templateUrl: './create-service.component.html',
+    styleUrl: './create-service.component.css',
+    standalone: false
 })
 export class CreateServiceComponent implements OnInit, OnDestroy{
   isLoading: boolean = false;

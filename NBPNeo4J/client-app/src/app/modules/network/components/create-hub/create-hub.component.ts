@@ -6,9 +6,10 @@ import {HubInterface} from "../../interfaces/hub.interface";
 import {HubCreateInterface} from "../../interfaces/hub-create.interface";
 
 @Component({
-  selector: 'app-create-hub',
-  templateUrl: './create-hub.component.html',
-  styleUrl: './create-hub.component.css'
+    selector: 'app-create-hub',
+    templateUrl: './create-hub.component.html',
+    styleUrl: './create-hub.component.css',
+    standalone: false
 })
 export class CreateHubComponent implements OnInit, OnDestroy{
   isLoading: boolean = false;

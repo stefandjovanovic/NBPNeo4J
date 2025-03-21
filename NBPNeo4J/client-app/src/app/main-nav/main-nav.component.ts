@@ -4,9 +4,10 @@ import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 
 @Component({
-  selector: 'app-main-nav',
-  templateUrl: './main-nav.component.html',
-  styleUrl: './main-nav.component.css'
+    selector: 'app-main-nav',
+    templateUrl: './main-nav.component.html',
+    styleUrl: './main-nav.component.css',
+    standalone: false
 })
 export class MainNavComponent {
   private breakpointObserver = inject(BreakpointObserver);
