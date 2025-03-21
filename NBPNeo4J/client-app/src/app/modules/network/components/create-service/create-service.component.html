@@ -1,1 +1,77 @@
-<p>create-service works!</p>
+<form class="form-group" #hubForm="ngForm" (ngSubmit)="onSubmit(hubForm)">
+  <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+
+  <mat-form-field class="margin-10">
+    <mat-label>Name</mat-label>
+    <input matInput
+           ngModel
+           #name="ngModel"
+           type="input"
+           name="name"
+           required>
+    <mat-error *ngIf="name.invalid && name.touched">You must enter a name</mat-error>
+  </mat-form-field>
+
+
+  <mat-form-field class="margin-10">
+    <mat-label>City</mat-label>
+    <input matInput
+           ngModel
+           #city="ngModel"
+           type="input"
+           name="city"
+           required>
+    <mat-error *ngIf="city.invalid && city.touched">You must enter a city</mat-error>
+  </mat-form-field>
+
+
+  <mat-form-field class="margin-10">
+    <mat-label>Address</mat-label>
+    <input matInput
+           ngModel
+           #address="ngModel"
+           type="input"
+           name="address"
+           required>
+    <mat-error *ngIf="address.invalid && address.touched">You must enter an address</mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="margin-10">
+    <mat-label>Longitude</mat-label>
+    <input matInput
+           ngModel
+           #longitude="ngModel"
+           type="number"
+           name="longitude"
+           placeholder="0.00"
+           required>
+    <mat-error *ngIf="longitude.invalid && longitude.touched">You must enter a longitude</mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="margin-10">
+    <mat-label>Latitude</mat-label>
+    <input matInput
+           ngModel
+           #latitude="ngModel"
+           type="number"
+           name="latitude"
+           placeholder="0.00"
+           required>
+    <mat-error *ngIf="latitude.invalid && latitude.touched">You must enter a latitude</mat-error>
+  </mat-form-field>
+  <h4 class="margin-10">Connected to hub:</h4>
+  <mat-radio-group class="margin-10" [(ngModel)]="selectedHubId" name="selctedHub" required>
+    <mat-radio-button *ngFor="let hub of existingHubs" [value]="hub.id">
+      {{ hub.name }}
+    </mat-radio-button>
+  </mat-radio-group>
+
+  <button mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="hubForm.invalid"
+          class="button">
+    Create Service
+  </button>
+
+</form>

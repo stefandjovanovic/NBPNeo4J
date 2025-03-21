@@ -13,7 +13,9 @@ import {MatFormFieldModule} from "@angular/material/form-field";
 import {MatGridListModule} from "@angular/material/grid-list";
 import {MatInputModule} from "@angular/material/input";
 import {MatProgressBarModule} from "@angular/material/progress-bar";
-import {FormsModule} from "@angular/forms";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {HttpClientModule} from "@angular/common/http";
+import {MatRadioModule} from "@angular/material/radio";
 
 
 
@@ -35,7 +37,9 @@ import {FormsModule} from "@angular/forms";
     MatGridListModule,
     MatInputModule,
     MatProgressBarModule,
-    FormsModule
+    FormsModule,
+    ReactiveFormsModule,
+    MatRadioModule
   ]
 })
 export class NetworkModule { }
