@@ -8,5 +8,6 @@ export interface HubInterface{
   connectedHubs: {
     id: string;
     distance: number;
+    name: string;
   }[];
 }

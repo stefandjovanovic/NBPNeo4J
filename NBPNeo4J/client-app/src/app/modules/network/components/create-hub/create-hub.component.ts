@@ -4,6 +4,7 @@ import {Router} from "@angular/router";
 import {NgForm} from "@angular/forms";
 import {HubInterface} from "../../interfaces/hub.interface";
 import {HubCreateInterface} from "../../interfaces/hub-create.interface";
+import {Subscription} from "rxjs";
 
 @Component({
     selector: 'app-create-hub',
@@ -19,13 +20,15 @@ export class CreateHubComponent implements OnInit, OnDestroy{
     checked: boolean;
   }[] = [];
 
+  existingHubsSubscription: Subscription = new Subscription();
+
   constructor(
     private networkService: NetworkService
   ){}
 
 
   ngOnInit() {
-    this.networkService.hubsChanged.subscribe((hubs) => {
+    this.existingHubsSubscription = this.networkService.hubsChanged.subscribe((hubs) => {
       this.existingHubs = hubs.map((hub: HubInterface) => {
         return {
           name: hub.name,
@@ -38,7 +41,8 @@ export class CreateHubComponent implements OnInit, OnDestroy{
   }
 
   ngOnDestroy() {
-    this.networkService.hubsChanged.unsubscribe();
+    if(this.existingHubsSubscription)
+      this.existingHubsSubscription.unsubscribe();
   }
 
 

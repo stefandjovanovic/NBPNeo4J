@@ -3,6 +3,7 @@ import {NetworkService} from "../../services/network.service";
 import {HubInterface} from "../../interfaces/hub.interface";
 import {NgForm} from "@angular/forms";
 import {ServiceCreateInterface} from "../../interfaces/service-create.interface";
+import {Subscription} from "rxjs";
 
 @Component({
     selector: 'app-create-service',
@@ -19,13 +20,15 @@ export class CreateServiceComponent implements OnInit, OnDestroy{
   }[] = [];
   selectedHubId: string = '';
 
+  existingServicesSubscription: Subscription = new Subscription();
+
   constructor(
     private networkService: NetworkService
   ){}
 
 
   ngOnInit() {
-    this.networkService.hubsChanged.subscribe((hubs) => {
+    this.existingServicesSubscription = this.networkService.hubsChanged.subscribe((hubs) => {
       this.existingHubs = hubs.map((hub: HubInterface) => {
         return {
           name: hub.name,
@@ -38,7 +41,9 @@ export class CreateServiceComponent implements OnInit, OnDestroy{
   }
 
   ngOnDestroy() {
-    this.networkService.hubsChanged.unsubscribe();
+    if(this.existingServicesSubscription) {
+      this.existingServicesSubscription.unsubscribe();
+    }
   }
 
   onSubmit(form: NgForm) {

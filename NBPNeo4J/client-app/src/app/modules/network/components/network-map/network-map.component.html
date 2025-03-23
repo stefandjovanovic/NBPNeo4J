@@ -1,1 +1,63 @@
-<p>network-map works!</p>
+<div class="map-wrap">
+
+  <div class="map">
+    <mgl-map #map
+             [style]="'https://api.maptiler.com/maps/bright-v2/style.json?key=d96hSHCLErl8rkEEoIrM'"
+             [zoom]="[6.5]"
+             [center]="[20.874, 44.366]"
+              [scrollZoom]="true"
+             [canvasContextAttributes]="{preserveDrawingBuffer: true}"
+    >
+      <div *ngFor="let hub of hubs">
+        <mgl-marker [lngLat]="[hub.longitude, hub.latitude]">
+          <div
+            (click)="onHubClick(hub)"
+            class="marker, court-icon"
+            [style.backgroundImage]="'url(assets/hub.png)'"
+          ></div>
+        </mgl-marker>
+
+      </div>
+
+      <div *ngFor="let hubLine of connectedHubs">
+        <mgl-geojson-source id="{{hubLine.start.id}}-{{hubLine.end.id}}">
+          <mgl-feature [geometry]="{
+            type: 'LineString',
+            coordinates: [
+              [hubLine.start.longitude, hubLine.start.latitude],
+              [hubLine.end.longitude, hubLine.end.latitude]
+            ]
+          }"></mgl-feature>
+        </mgl-geojson-source>
+
+        <mgl-layer
+          id="{{hubLine.start.id}}-{{hubLine.end.id}}"
+          type="line"
+          source="{{hubLine.start.id}}-{{hubLine.end.id}}"
+          [layout]="{
+            'line-cap': 'round',
+            'line-join': 'round'
+          }"
+          [paint]="{
+            'line-color': '#888',
+            'line-width': 6
+          }">
+        </mgl-layer>
+      </div>
+
+
+
+
+      <mgl-control mglNavigation position="top-left"></mgl-control>
+
+
+
+    </mgl-map>
+  </div>
+  <div class="button-container">
+    <button mat-flat-button color="primary" routerLink="/network/hub/create" class="button-add" >Add new Hub</button>
+    <button mat-flat-button color="accent" routerLink="/network/service/create" class="button" >Add new Service</button>
+
+  </div>
+
+</div>

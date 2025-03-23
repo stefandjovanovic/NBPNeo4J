@@ -60,7 +60,8 @@ namespace NBPNeo4J.Services
                 returnHubDTO.ConnectedHubs.Add(new ConnectedHubDto
                 {
                     Id = connectedHub.Target.Id,
-                    Distance = connectedHub.Distance
+                    Distance = connectedHub.Distance,
+                    Name = connectedHub.Target.Name
                 });
             }
 
@@ -109,7 +110,8 @@ namespace NBPNeo4J.Services
                         returnHub.ConnectedHubs.Add(new ConnectedHubDto
                         {
                             Id = connectedHub.Target.Id,
-                            Distance = connectedHub.Distance
+                            Distance = connectedHub.Distance,
+                            Name = connectedHub.Target.Name
                         });
                     }
                 }
@@ -175,7 +177,8 @@ namespace NBPNeo4J.Services
                 returnHubDTO.ConnectedHubs.Add(new ConnectedHubDto
                 {
                     Id = connectedHub.Target.Id,
-                    Distance = connectedHub.Distance
+                    Distance = connectedHub.Distance,
+                    Name = connectedHub.Target.Name
                 });
             }
 

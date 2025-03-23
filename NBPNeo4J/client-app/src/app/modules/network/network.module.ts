@@ -16,6 +16,18 @@ import {MatProgressBarModule} from "@angular/material/progress-bar";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {} from "@angular/common/http";
 import {MatRadioModule} from "@angular/material/radio";
+import {
+  ControlComponent, FeatureComponent, GeoJSONSourceComponent,
+  LayerComponent,
+  MapComponent,
+  MarkerComponent,
+  NavigationControlDirective
+} from "@maplibre/ngx-maplibre-gl";
+import { UpdateHubComponent } from './components/update-hub/update-hub.component';
+import { UpdateServiceComponent } from './components/update-service/update-service.component';
+import { ServiceDetailsComponent } from './components/service-details/service-details.component';
+import { DeleteDialogComponent } from './components/delete-dialog/delete-dialog.component';
+import {MatDialogModule} from "@angular/material/dialog";
 
 
 
@@ -25,7 +37,11 @@ import {MatRadioModule} from "@angular/material/radio";
     NetworkMapComponent,
     CreateHubComponent,
     CreateServiceComponent,
-    HubDetailsComponent
+    HubDetailsComponent,
+    UpdateHubComponent,
+    UpdateServiceComponent,
+    ServiceDetailsComponent,
+    DeleteDialogComponent
   ],
   imports: [
     CommonModule,
@@ -39,7 +55,15 @@ import {MatRadioModule} from "@angular/material/radio";
     MatProgressBarModule,
     FormsModule,
     ReactiveFormsModule,
-    MatRadioModule
+    MatRadioModule,
+    MapComponent,
+    ControlComponent,
+    NavigationControlDirective,
+    MarkerComponent,
+    LayerComponent,
+    GeoJSONSourceComponent,
+    FeatureComponent,
+    MatDialogModule
   ]
 })
 export class NetworkModule { }

@@ -1,4 +1,4 @@
-import {Injectable, OnDestroy, OnInit} from '@angular/core';
+import {EventEmitter, Injectable, OnDestroy, OnInit} from '@angular/core';
 import {HubInterface} from "../interfaces/hub.interface";
 import { HttpClient } from "@angular/common/http";
 import {MatSnackBar} from "@angular/material/snack-bar";
@@ -17,6 +17,10 @@ export class NetworkService{
 
   services: ServiceInterface[] = [];
   servicesChanged: Subject<ServiceInterface[]> = new Subject<ServiceInterface[]>();
+
+
+  hubSelected: EventEmitter<HubInterface> = new EventEmitter<HubInterface>();
+  serviceSelected: EventEmitter<ServiceInterface> = new EventEmitter<ServiceInterface>();
 
 
   private hubUrl = 'https://localhost:7255/api/hub';
@@ -71,6 +75,10 @@ export class NetworkService{
         duration: 2000,
       });
     });
+  }
+
+  getHub(hubId: string){
+    return this.hubs.find((hub) => hub.id === hubId);
   }
 
   fetchServices() {
