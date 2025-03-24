@@ -68,7 +68,7 @@ namespace NBPNeo4J.Controllers
             if (dto == null || dto.Vehicle == null)
                 return BadRequest("Invalid input data");
 
-            Vehicle vehicle = await _serviceService.AddVehicleToServiceStationAsync(serviceStationId, dto.Vehicle, dto.Parts, dto.Date);
+            Vehicle vehicle = await _serviceService.AddVehicleToServiceStationAsync(serviceStationId, dto.Vehicle, dto.PartsIds, dto.Date);
             return Ok(vehicle);
         }
 

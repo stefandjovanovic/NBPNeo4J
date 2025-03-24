@@ -15,7 +15,7 @@ namespace NBPNeo4J.Services
 
         Task ConnectServiceToHub(string serviceId, string hubId);
 
-        Task<Vehicle> AddVehicleToServiceStationAsync(string serviceStationId, Vehicle vehicle, List<Part> parts, DateTime date);
+        Task<Vehicle> AddVehicleToServiceStationAsync(string serviceStationId, Vehicle vehicle, List<String> partsIds, DateTime date);
         Task<Vehicle> RemoveVehicleFromServiceStationAsync(string serviceStationId, string vehicleId);
         Task<List<Vehicle>> GetAllVehicles(string serviceId);
 
@@ -178,7 +178,7 @@ namespace NBPNeo4J.Services
             return distance;
         }
 
-        public async Task<Vehicle> AddVehicleToServiceStationAsync(string serviceStationId, Vehicle vehicle, List<Part> parts, DateTime date)
+        public async Task<Vehicle> AddVehicleToServiceStationAsync(string serviceStationId, Vehicle vehicle, List<String> partsIds, DateTime date)
         {
             ServiceStation serviceStation = await _serviceStationRepository.GetServiceStationAsync(serviceStationId);
             if (serviceStation == null)
@@ -187,7 +187,7 @@ namespace NBPNeo4J.Services
             }
             vehicle.Id = Guid.NewGuid().ToString();
             
-            await _serviceStationRepository.AddVehicleToServiceStationAsync(serviceStationId, vehicle, parts, date);
+            await _serviceStationRepository.AddVehicleToServiceStationAsync(serviceStationId, vehicle, partsIds, date);
             return vehicle;
         }
 
