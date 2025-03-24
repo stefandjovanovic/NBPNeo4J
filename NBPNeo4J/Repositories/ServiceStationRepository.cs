@@ -27,7 +27,7 @@ namespace NBPNeo4J.Repositories
         Task ConnectServiceToHub(string serviceStationId, string hubId, double distance);
         Task<List<Vehicle>> GetVehiclesOnServiceStationAsync(string serviceId);
         //Kod dodavanja vozila na servis, potrebno je dodati i delove !!
-        Task<Vehicle> AddVehicleToServiceStationAsync(string serviceStationId, Vehicle vehicle, List<Part> parts, DateTime date);
+        Task<Vehicle> AddVehicleToServiceStationAsync(string serviceStationId, Vehicle vehicle, List<String> partsIds, DateTime date);
         Task<Vehicle> RemoveVehicleFromServiceStationAsync(string serviceStationId, string vehicleId);
 
     }
@@ -238,7 +238,7 @@ namespace NBPNeo4J.Repositories
                 .ToList();
         }
 
-        public async Task<Vehicle> AddVehicleToServiceStationAsync(string serviceStationId, Vehicle vehicle, List<Part> parts, DateTime date)
+        public async Task<Vehicle> AddVehicleToServiceStationAsync(string serviceStationId, Vehicle vehicle, List<String> partsIds, DateTime date)
         {            
             Vehicle createdVehicle = await _vehicleRepository.CreateVehicleAsync(vehicle);
 
@@ -253,8 +253,8 @@ namespace NBPNeo4J.Repositories
             {
                 ServiceStationId = serviceStationId,
                 VehicleId = createdVehicle.Id,
-                Parts = parts.Select(p => p.ToString()).ToList(), // Assuming Part can be converted to string
-                Date = date.ToString("o") // ISO 8601 format
+                Parts = partsIds,
+                Date = date.ToString("o") 
             };
 
             await _driver

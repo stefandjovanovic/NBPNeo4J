@@ -13,10 +13,12 @@ namespace NBPNeo4J.Repositories
         Task<List<Part>> GetAllPartsAsync();
 
         Task<PartCategory> GetPartCategoryAsync(string id);
-        Task<IEnumerable<PartCategory>> GetPartCategoriesAsync(); //dodaj
-        Task<PartCategory> CreatePartCategoryAsync(PartCategory partCategory); //dodaj
-        Task<PartCategory> UpdatePartCategoryAsync(PartCategory partCategory); //dodaj
-        Task DeletePartCategoryAsync(string id); //dodaj
+        Task<IEnumerable<PartCategory>> GetPartCategoriesAsync(); 
+        Task<PartCategory> CreatePartCategoryAsync(PartCategory partCategory); 
+        Task<PartCategory> UpdatePartCategoryAsync(PartCategory partCategory); 
+        Task DeletePartCategoryAsync(string id);
+
+        Task<List<Part>> GetAllPartsOfCategoryAsync(string categoryId);
     }
     public class PartsRepository : IPartsRepository
     {
@@ -29,7 +31,7 @@ namespace NBPNeo4J.Repositories
         public async Task<Part> CreatePartAsync(Part part, string partCategoryId)
         {
             string query = @"
-                CREATE (p: Part {
+                CREATE (p:Part {
                     SerialCode: $SerialCode,
                     Name: $Name,
                     Description: $Description,
@@ -37,7 +39,15 @@ namespace NBPNeo4J.Repositories
                     Price: $Price,
                     PartCategoryId: $PartCategoryId
                 })
-                RETURN p.SerialCode AS SerialCode, p.Name AS Name, p.Description AS Description, p.Image AS Image, p.Price AS Price, p.PartCategoryId AS PartCategoryId";
+                WITH p
+                MATCH (pc:PartCategory {Id: $PartCategoryId})
+                CREATE (p)-[:PART_BELONGS_TO_CATEGORY]->(pc)
+                RETURN p.SerialCode AS SerialCode,
+                       p.Name AS Name,
+                       p.Description AS Description,
+                       p.Image AS Image,
+                       p.Price AS Price,
+                       p.PartCategoryId AS PartCategoryId";
 
             var parameters = new
             {
@@ -46,7 +56,7 @@ namespace NBPNeo4J.Repositories
                 part.Description,
                 part.Image,
                 part.Price,
-                part.PartCategoryId
+                PartCategoryId = partCategoryId
             };
 
             var (queryResults, _) = await _driver
@@ -64,27 +74,23 @@ namespace NBPNeo4J.Repositories
                 PartCategoryId = queryResults[0]["PartCategoryId"].As<string>()
             };
         }
-        public async Task<PartCategory> CreatePartCategoryAsync(PartCategory partCategory)
-        {
-            throw new NotImplementedException();
-        }
+
 
         public async Task DeletePartAsync(string serialCode)
         {
-            string query = "MATCH (p:Part { SerialCode: $SerialCode}) DETACH DELETE p";
+            string query = @"
+                MATCH (p:Part {SerialCode: $SerialCode})
+                DETACH DELETE p"; 
+
             var parameters = new { SerialCode = serialCode };
-            var (_, information) = await _driver.ExecutableQuery(query).WithParameters(parameters).ExecuteAsync();
 
-            if(information.Counters.NodesDeleted != 1)
-            {
-                throw new Exception("Part not found");
-            }
+            await _driver
+                .ExecutableQuery(query)
+                .WithParameters(parameters)
+                .ExecuteAsync();
         }
 
-        public async Task DeletePartCategoryAsync(string id)
-        {
-            throw new NotImplementedException();
-        }
+
 
         public async Task<List<Part>> GetAllPartsAsync()
         {
@@ -152,32 +158,165 @@ namespace NBPNeo4J.Repositories
 
         public async Task<IEnumerable<PartCategory>> GetPartCategoriesAsync()
         {
-            throw new NotImplementedException();
+            string query = @"
+            MATCH (pc:PartCategory)
+            RETURN pc.Id AS Id, pc.Name AS Name, pc.Description AS Description";
+
+            var (queryResults, _) = await _driver
+                .ExecutableQuery(query)
+                .ExecuteAsync();
+
+            return queryResults.Select(record => new PartCategory
+            {
+                Id = record["Id"].As<string>(),
+                Name = record["Name"].As<string>(),
+                Description = record["Description"].As<string>()
+            });
         }
 
         public async Task<PartCategory> GetPartCategoryAsync(string id)
         {
-            throw new NotImplementedException();
-        }
-
-        public async Task<PartCategory> UpdatePartCategoryAsync(PartCategory partCategory)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<Part> UpdatePartInformationAsync(Part part)
-        {
             string query = @"
-                MATCH (p:Part { SerialCode: $SerialCode })
-                SET p.Name = $Name, p.Description = $Description, p.Image = $Image, p.Price = $Price, p.PartCategoryId = $PartCategoryId
-                RETURN p.SerialCode AS SerialCode, p.Name AS Name, p.Description AS Description, p.Image AS Image, p.Price AS Price, p.PartCategoryId AS PartCategoryId";
+            MATCH (pc:PartCategory { Id: $Id })
+            RETURN pc.Id AS Id, pc.Name AS Name, pc.Description AS Description";
 
-            var parameters = new { part.SerialCode, part.Name, part.Description, part.Image, part.Price, part.PartCategoryId };
+            var parameters = new { Id = id };
 
             var (queryResults, _) = await _driver
                 .ExecutableQuery(query)
                 .WithParameters(parameters)
                 .ExecuteAsync();
+
+            if (queryResults.Count == 0)
+                return null;
+
+            return new PartCategory
+            {
+                Id = queryResults[0]["Id"].As<string>(),
+                Name = queryResults[0]["Name"].As<string>(),
+                Description = queryResults[0]["Description"].As<string>()
+            };
+        }
+
+        public async Task<PartCategory> CreatePartCategoryAsync(PartCategory partCategory)
+        {
+            string query = @"
+            CREATE (pc:PartCategory {
+                Id: $Id,
+                Name: $Name,
+                Description: $Description
+            })
+            RETURN pc.Id AS Id, pc.Name AS Name, pc.Description AS Description";
+
+            var parameters = new
+            {
+                Id = Guid.NewGuid().ToString(), // Generate unique ID
+                partCategory.Name,
+                partCategory.Description
+            };
+
+            var (queryResults, _) = await _driver
+                .ExecutableQuery(query)
+                .WithParameters(parameters)
+                .ExecuteAsync();
+
+            return new PartCategory
+            {
+                Id = queryResults[0]["Id"].As<string>(),
+                Name = queryResults[0]["Name"].As<string>(),
+                Description = queryResults[0]["Description"].As<string>()
+            };
+        }
+
+        public async Task<PartCategory> UpdatePartCategoryAsync(PartCategory partCategory)
+        {
+            string query = @"
+            MATCH (pc:PartCategory { Id: $Id })
+            SET pc.Name = $Name, pc.Description = $Description
+            RETURN pc.Id AS Id, pc.Name AS Name, pc.Description AS Description";
+
+            var parameters = new
+            {
+                partCategory.Id,
+                partCategory.Name,
+                partCategory.Description
+            };
+
+            var (queryResults, _) = await _driver
+                .ExecutableQuery(query)
+                .WithParameters(parameters)
+                .ExecuteAsync();
+
+            if (queryResults.Count == 0)
+                throw new Exception("PartCategory not found.");
+
+            return new PartCategory
+            {
+                Id = queryResults[0]["Id"].As<string>(),
+                Name = queryResults[0]["Name"].As<string>(),
+                Description = queryResults[0]["Description"].As<string>()
+            };
+        }
+
+        public async Task DeletePartCategoryAsync(string id)
+        {
+            string query = @"
+            MATCH (pc:PartCategory { Id: $Id })
+            DETACH DELETE pc";
+
+            var parameters = new { Id = id };
+
+            await _driver
+                .ExecutableQuery(query)
+                .WithParameters(parameters)
+                .ExecuteAsync();
+        }
+
+        public async Task<Part> UpdatePartInformationAsync(Part part)
+        {
+            string query = @"
+                    MATCH (p:Part {SerialCode: $SerialCode})
+                    SET p.Name = $Name,
+                        p.Description = $Description,
+                        p.Image = $Image,
+                        p.Price = $Price
+                    WITH p
+        
+                    // Remove existing category relationship
+                    OPTIONAL MATCH (p)-[r:PART_BELONGS_TO_CATEGORY]->()
+                    DELETE r
+        
+                    WITH p
+                    // Create new relationship to category
+                    MATCH (pc:PartCategory {Id: $PartCategoryId})
+                    CREATE (p)-[:PART_BELONGS_TO_CATEGORY]->(pc)
+        
+                    SET p.PartCategoryId = $PartCategoryId
+        
+                    RETURN p.SerialCode AS SerialCode,
+                           p.Name AS Name,
+                           p.Description AS Description,
+                           p.Image AS Image,
+                           p.Price AS Price,
+                           p.PartCategoryId AS PartCategoryId";
+
+            var parameters = new
+            {
+                part.SerialCode,
+                part.Name,
+                part.Description,
+                part.Image,
+                part.Price,
+                part.PartCategoryId
+            };
+
+            var (queryResults, _) = await _driver
+                .ExecutableQuery(query)
+                .WithParameters(parameters)
+                .ExecuteAsync();
+
+            if (queryResults.Count == 0)
+                throw new Exception("Part not found.");
 
             return new Part
             {
@@ -188,6 +327,42 @@ namespace NBPNeo4J.Repositories
                 Price = queryResults[0]["Price"].As<double>(),
                 PartCategoryId = queryResults[0]["PartCategoryId"].As<string>()
             };
+        }
+
+        public async Task<List<Part>> GetAllPartsOfCategoryAsync(string categoryId)
+        {
+            string query = @"
+                MATCH (p:Part)-[:PART_BELONGS_TO_CATEGORY]->(c:PartCategory {Id: $categoryId})
+                RETURN p.SerialCode AS SerialCode, 
+                       p.Name AS Name, 
+                       p.Description AS Description, 
+                       p.Image AS Image, 
+                       p.Price AS Price, 
+                       p.PartCategoryId AS PartCategoryId";
+
+            var parameters = new { categoryId };
+
+            var (queryResults, _) = await _driver
+                .ExecutableQuery(query)
+                .WithParameters(parameters)
+                .ExecuteAsync();
+
+            List<Part> parts = new List<Part>();
+
+            foreach (var record in queryResults)
+            {
+                parts.Add(new Part
+                {
+                    SerialCode = record["SerialCode"].As<string>(),
+                    Name = record["Name"].As<string>(),
+                    Description = record["Description"].As<string>(),
+                    Image = record["Image"].As<string>(),
+                    Price = record["Price"].As<double>(),
+                    PartCategoryId = record["PartCategoryId"].As<string>()
+                });
+            }
+
+            return parts;
         }
     }
 }

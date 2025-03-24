@@ -12,8 +12,14 @@ namespace NBPNeo4J.Services
         Task<List<ReturnPartDTO>> GetAllParts();
 
         // Napravi DTO za PartCategory
-        Task<List<PartCategoryDto>> GetAllPartCategories();
+        
         Task<List<ReturnPartDTO>> GetAllPartsOfCategory(string categoryId);
+
+        Task<List<PartCategoryDTO>> GetAllPartCategories();
+        Task<PartCategoryDTO> GetPartCategory(string categoryId);
+        Task<PartCategoryDTO> CreateCategory(PartCategoryDTO createCategoryDTO);
+        Task<PartCategoryDTO> UpdateCategory(string categoryId, PartCategoryDTO createCategoryDTO);
+        Task DeleteCategory(string categoryId);
     }
     public class PartsService : IPartsService
     {
@@ -36,13 +42,58 @@ namespace NBPNeo4J.Services
 
             Part createdPart = await _partsRepository.CreatePartAsync(part, createPartDTO.PartCategoryId);
 
-            ReturnPartDTO returnPartDTO = new ReturnPartDTO();
-            returnPartDTO.SerialCode = createdPart.SerialCode;
-            returnPartDTO.Name = createdPart.Name;
-            returnPartDTO.Description = createdPart.Description;
-            returnPartDTO.Image = createdPart.Image;
-            returnPartDTO.Price = createdPart.Price;
-            returnPartDTO.PartCategory.Id = createdPart.PartCategoryId;
+            
+            var category = await _partsRepository.GetPartCategoryAsync(createdPart.PartCategoryId);
+
+            ReturnPartDTO returnPartDTO = new ReturnPartDTO
+            {
+                SerialCode = createdPart.SerialCode,
+                Name = createdPart.Name,
+                Description = createdPart.Description,
+                Image = createdPart.Image,
+                Price = createdPart.Price,
+                PartCategory = new PartCategoryDTO
+                {
+                    Id = category.Id,
+                    Name = category.Name,
+                    Description = category.Description
+                }
+            };
+
+            return returnPartDTO;
+        }
+
+        public async Task<ReturnPartDTO> UpdatePart(string serialCode, CreatePartDTO createPartDTO)
+        {
+            var part = new Part
+            {
+                SerialCode = serialCode,
+                Name = createPartDTO.Name,
+                Description = createPartDTO.Description,
+                Image = createPartDTO.Image,
+                Price = createPartDTO.Price,
+                PartCategoryId = createPartDTO.PartCategoryId
+            };
+
+            Part updatedPart = await _partsRepository.UpdatePartInformationAsync(part);
+
+            
+            var category = await _partsRepository.GetPartCategoryAsync(updatedPart.PartCategoryId);
+
+            ReturnPartDTO returnPartDTO = new ReturnPartDTO
+            {
+                SerialCode = updatedPart.SerialCode,
+                Name = updatedPart.Name,
+                Description = updatedPart.Description,
+                Image = updatedPart.Image,
+                Price = updatedPart.Price,
+                PartCategory = new PartCategoryDTO
+                {
+                    Id = category.Id,
+                    Name = category.Name,
+                    Description = category.Description
+                }
+            };
 
             return returnPartDTO;
         }
@@ -50,11 +101,6 @@ namespace NBPNeo4J.Services
         public async Task DeletePart(string serialCode)
         {
             await _partsRepository.DeletePartAsync(serialCode);
-        }
-
-        public async Task<List<PartCategoryDto>> GetAllPartCategories()
-        {
-            throw new NotImplementedException();
         }
 
         public async Task<List<ReturnPartDTO>> GetAllParts()
@@ -80,31 +126,108 @@ namespace NBPNeo4J.Services
 
         public async Task<List<ReturnPartDTO>> GetAllPartsOfCategory(string categoryId)
         {
-            throw new NotImplementedException();
+            var parts = await _partsRepository.GetAllPartsOfCategoryAsync(categoryId);
+
+            List<ReturnPartDTO> partDTOs = new List<ReturnPartDTO>();
+
+            foreach (var part in parts)
+            {
+                partDTOs.Add(new ReturnPartDTO
+                {
+                    SerialCode = part.SerialCode,
+                    Name = part.Name,
+                    Description = part.Description,
+                    Image = part.Image,
+                    Price = part.Price,
+                    PartCategory = new PartCategoryDTO
+                    {
+                        Id = part.PartCategoryId
+                    }
+                });
+            }
+
+            return partDTOs;
         }
 
-        public async Task<ReturnPartDTO> UpdatePart(string serialCode, CreatePartDTO createPartDTO)
+      
+
+
+        public async Task<List<PartCategoryDTO>> GetAllPartCategories()
         {
-            var part = new Part
+            var categories = await _partsRepository.GetPartCategoriesAsync();
+
+            List<PartCategoryDTO> categoryDtos = new List<PartCategoryDTO>();
+
+            foreach (var category in categories)
             {
-                SerialCode = serialCode,
-                Name = createPartDTO.Name,
-                Description = createPartDTO.Description,
-                Image = createPartDTO.Image,
-                Price = createPartDTO.Price,
-                PartCategoryId = createPartDTO.PartCategoryId
+                categoryDtos.Add(new PartCategoryDTO
+                {
+                    Id = category.Id,
+                    Name = category.Name,
+                    Description = category.Description
+                });
+            }
+
+            return categoryDtos;
+        }
+
+        public async Task<PartCategoryDTO> GetPartCategory(string categoryId)
+        {
+            var category = await _partsRepository.GetPartCategoryAsync(categoryId);
+            if (category == null)
+            {
+                return null;
+            }
+
+            return new PartCategoryDTO
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Description = category.Description
+            };
+        }
+
+        public async Task<PartCategoryDTO> CreateCategory(PartCategoryDTO createCategoryDTO)
+        {
+            var category = new PartCategory
+            {
+                Name = createCategoryDTO.Name,
+                Description = createCategoryDTO.Description
             };
 
-            Part updatedPart = await _partsRepository.UpdatePartInformationAsync(part);
+            PartCategory createdCategory = await _partsRepository.CreatePartCategoryAsync(category);
 
-            ReturnPartDTO returnPartDTO = new ReturnPartDTO();
-            returnPartDTO.SerialCode = updatedPart.SerialCode;
-            returnPartDTO.Name = updatedPart.Name;
-            returnPartDTO.Description = updatedPart.Description;
-            returnPartDTO.Image = updatedPart.Image;
-            returnPartDTO.PartCategoryId = updatedPart.PartCategoryId;
-
-            return returnPartDTO;
+            return new PartCategoryDTO
+            {
+                Id = createdCategory.Id,
+                Name = createdCategory.Name,
+                Description = createdCategory.Description
+            };
         }
+
+        public async Task<PartCategoryDTO> UpdateCategory(string categoryId, PartCategoryDTO createCategoryDTO)
+        {
+            var category = new PartCategory
+            {
+                Id = categoryId,
+                Name = createCategoryDTO.Name,
+                Description = createCategoryDTO.Description
+            };
+
+            PartCategory updatedCategory = await _partsRepository.UpdatePartCategoryAsync(category);
+
+            return new PartCategoryDTO
+            {
+                Id = updatedCategory.Id,
+                Name = updatedCategory.Name,
+                Description = updatedCategory.Description
+            };
+        }
+
+        public async Task DeleteCategory(string categoryId)
+        {
+            await _partsRepository.DeletePartCategoryAsync(categoryId);
+        }
+
     }
 }

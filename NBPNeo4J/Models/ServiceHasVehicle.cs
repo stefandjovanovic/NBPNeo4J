@@ -2,12 +2,12 @@
 {
     public class ServiceHasVehicle<T> : Relationship<T>
     {
-        public List<Part> Parts { get; set; } = new();
+        public List<String> PartsIds { get; set; } = new();
         public DateTime Date { get; set; }
        // public Hub Hub { get; set; }
-        public ServiceHasVehicle(T target, List<Part> parts, DateTime date, Hub hub) : base(target, "SERVICE_HAS_CAR")
+        public ServiceHasVehicle(T target, List<String> partsIds, DateTime date, Hub hub) : base(target, "SERVICE_HAS_CAR")
         {
-            Parts = parts;
+            PartsIds = partsIds;
             Date = date;
            // Hub = hub;
         }
