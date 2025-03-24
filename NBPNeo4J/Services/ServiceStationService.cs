@@ -31,28 +31,51 @@ namespace NBPNeo4J.Services
             _hubRepository = hubRepository;
         }
 
-        public async Task<ReturnServiceDTO> CreateService(CreateServiceDTO createServiceDTO)
+        public async Task<ReturnServiceDTO> CreateService(CreateServiceDTO serviceDto)
         {
-            var serviceStation = new ServiceStation
+            var service = new ServiceStation
             {
                 Id = Guid.NewGuid().ToString(),
-                Name = createServiceDTO.Name,
-                Address = createServiceDTO.Address,
-                City = createServiceDTO.City,
-                Latitude = createServiceDTO.Latitude,
-                Longitude = createServiceDTO.Longitude
+                Name = serviceDto.Name,
+                Address = serviceDto.Address,
+                City = serviceDto.City,
+                Latitude = serviceDto.Latitude,
+                Longitude = serviceDto.Longitude
             };
-            ServiceStation createdServiceStation = await _serviceStationRepository.CreateServiceStationAsync(serviceStation);
+
             
-            ReturnServiceDTO returnServiceDTO = new ReturnServiceDTO();
-            returnServiceDTO.Id = createdServiceStation.Id;
-            returnServiceDTO.Name = createdServiceStation.Name;
-            returnServiceDTO.Address = createdServiceStation.Address;
-            returnServiceDTO.City = createdServiceStation.City;
-            returnServiceDTO.Latitude = createdServiceStation.Latitude;
-            returnServiceDTO.Longitude = createdServiceStation.Longitude;
-            
-            return returnServiceDTO;
+            await _serviceStationRepository.CreateServiceStationAsync(service);
+
+            if (!string.IsNullOrEmpty(serviceDto.HubId))
+            {
+                Hub connectedHub = await _hubRepository.GetHubAsync(serviceDto.HubId);
+                if (connectedHub == null)
+                {
+                    throw new Exception("Hub not found");
+                }
+
+                try
+                {
+                    double distance = CalculateDistance(service, connectedHub);
+
+                    
+                    await _serviceStationRepository.ConnectServiceToHub(service.Id, connectedHub.Id, distance);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Service created, but failed to connect to hub: {ex.Message}");
+                }
+            }
+
+            return new ReturnServiceDTO
+            {
+                Id = service.Id,
+                Name = service.Name,
+                Address = service.Address,
+                City = service.City,
+                Latitude = service.Latitude,
+                Longitude = service.Longitude
+            };
         }
 
         public async Task<ReturnServiceDTO> UpdateService(string serviceId, CreateServiceDTO createServiceDTO)

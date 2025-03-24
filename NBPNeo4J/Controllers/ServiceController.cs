@@ -19,8 +19,15 @@ namespace NBPNeo4J.Controllers
         [HttpPost("create")]
         public async Task<ActionResult<ReturnServiceDTO>> CreateServiceAsync([FromBody] CreateServiceDTO service)
         {
-            ReturnServiceDTO cretedServiceDTO = await _serviceService.CreateService(service);
-            return cretedServiceDTO;
+            try
+            {
+                ReturnServiceDTO createdServiceDTO = await _serviceService.CreateService(service);
+                return Ok(createdServiceDTO);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
         }
         [HttpPut("update/{serviceId}")]
         public async Task<ActionResult<ReturnServiceDTO>> UpdateServiceAsync(string serviceId, [FromBody] CreateServiceDTO service)
