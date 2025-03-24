@@ -1,0 +1,86 @@
+<form class="form-group" #hubForm="ngForm" (ngSubmit)="onSubmit(hubForm)">
+  <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+
+  <mat-form-field class="margin-10">
+    <mat-label>Name</mat-label>
+    <input matInput
+           ngModel
+           [(ngModel)]="nameInput"
+           #name="ngModel"
+           type="input"
+           name="name"
+           required>
+    <mat-error *ngIf="name.invalid && name.touched">You must enter a name</mat-error>
+  </mat-form-field>
+
+
+  <mat-form-field class="margin-10">
+    <mat-label>City</mat-label>
+    <input matInput
+           ngModel
+           [(ngModel)]="cityInput"
+           #city="ngModel"
+           type="input"
+           name="city"
+           required>
+    <mat-error *ngIf="city.invalid && city.touched">You must enter a city</mat-error>
+  </mat-form-field>
+
+
+  <mat-form-field class="margin-10">
+    <mat-label>Address</mat-label>
+    <input matInput
+           ngModel
+            [(ngModel)]="addressInput"
+           #address="ngModel"
+           type="input"
+           name="address"
+           required>
+    <mat-error *ngIf="address.invalid && address.touched">You must enter an address</mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="margin-10">
+    <mat-label>Longitude</mat-label>
+    <input matInput
+           ngModel
+           [(ngModel)]="longitudeInput"
+           #longitude="ngModel"
+           type="number"
+           name="longitude"
+           placeholder="0.00"
+           required>
+    <mat-error *ngIf="longitude.invalid && longitude.touched">You must enter a longitude</mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="margin-10">
+    <mat-label>Latitude</mat-label>
+    <input matInput
+           ngModel
+           [(ngModel)]="latitudeInput"
+           #latitude="ngModel"
+           type="number"
+           name="latitude"
+           placeholder="0.00"
+           required>
+    <mat-error *ngIf="latitude.invalid && latitude.touched">You must enter a latitude</mat-error>
+  </mat-form-field>
+  <h4 class="margin-10">Connected hubs:</h4>
+  <div class="margin-10" *ngFor="let hub of existingHubs">
+    <mat-checkbox
+      [(ngModel)]="hub.checked"
+      name="{{hub.id}}"
+    >
+      {{hub.name}}
+    </mat-checkbox>
+  </div>
+
+
+  <button mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="hubForm.invalid"
+          class="button">
+    Update Hub
+  </button>
+
+</form>

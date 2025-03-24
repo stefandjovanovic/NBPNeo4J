@@ -1,0 +1,7 @@
+.button-form{
+  display: flex;
+  justify-content: space-between;
+  padding: 0;
+  width: 50%;
+  margin: auto;
+}
