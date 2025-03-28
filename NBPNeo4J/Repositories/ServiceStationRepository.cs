@@ -25,6 +25,7 @@ namespace NBPNeo4J.Repositories
         Task<bool> DeleteServiceStationAsync(string id);
         Task<List<ServiceStation>> GetAllServiceStationsAsync();
         Task ConnectServiceToHub(string serviceStationId, string hubId, double distance);
+        Task DisconnectServiceFromHub(string serviceStationId);
         Task<List<Vehicle>> GetVehiclesOnServiceStationAsync(string serviceId);
         //Kod dodavanja vozila na servis, potrebno je dodati i delove !!
         Task<Vehicle> AddVehicleToServiceStationAsync(string serviceStationId, Vehicle vehicle, List<String> partsIds, DateTime date);
@@ -85,8 +86,10 @@ namespace NBPNeo4J.Repositories
         {
             string query = @"
                 MATCH (s:ServiceStation { Id: $Id })
+                OPTIONAL MATCH (s)-[r:SERVICE_CONNECTED_TO_HUB]->(hub:Hub)
                 RETURN s.Id AS Id, s.Name AS Name, s.Address AS Address, 
-                       s.City AS City, s.Latitude AS Latitude, s.Longitude AS Longitude";
+                       s.City AS City, s.Latitude AS Latitude, s.Longitude AS Longitude,
+                        r AS Relationship, hub AS ConnectedToHub";
 
             var parameters = new { Id = id };
 
@@ -97,6 +100,19 @@ namespace NBPNeo4J.Repositories
 
             if (!queryResults.Any())
                 return null;
+            var relationship = queryResults[0]["Relationship"].As<IRelationship>();
+            var connectedHubNode = queryResults[0]["ConnectedToHub"].As<INode>();
+
+            Hub connectedHub = new Hub
+            {
+                Id = connectedHubNode["Id"].As<string>(),
+                Name = connectedHubNode["Name"].As<string>(),
+                Address = connectedHubNode["Address"].As<string>(),
+                City = connectedHubNode["City"].As<string>(),
+                Latitude = connectedHubNode["Latitude"].As<double>(),
+                Longitude = connectedHubNode["Longitude"].As<double>()
+            };
+
 
             return new ServiceStation
             {
@@ -105,7 +121,8 @@ namespace NBPNeo4J.Repositories
                 Address = queryResults[0]["Address"].As<string>(),
                 City = queryResults[0]["City"].As<string>(),
                 Latitude = queryResults[0]["Latitude"].As<double>(),
-                Longitude = queryResults[0]["Longitude"].As<double>()
+                Longitude = queryResults[0]["Longitude"].As<double>(),
+                ConnectedHub = new ServiceConnectedToHub<Hub>(connectedHub, relationship["Distance"].As<double>())
             };
         }
 
@@ -154,7 +171,7 @@ namespace NBPNeo4J.Repositories
         {
             string query = @"
                 MATCH (s:ServiceStation { Id: $Id })
-                DELETE s
+                DETACH DELETE s
                 RETURN COUNT(s) AS DeletedCount";
 
             var parameters = new { Id = id };
@@ -171,8 +188,10 @@ namespace NBPNeo4J.Repositories
         {
             string query = @"
                 MATCH (s:ServiceStation)
+                OPTIONAL MATCH (s)-[r:SERVICE_CONNECTED_TO_HUB]->(hub:Hub)
                 RETURN s.Id AS Id, s.Name AS Name, s.Address AS Address, 
-                       s.City AS City, s.Latitude AS Latitude, s.Longitude AS Longitude";
+                       s.City AS City, s.Latitude AS Latitude, s.Longitude AS Longitude,
+                        r AS Relationship, hub as Hub";
 
             var (queryResults, _) = await _driver
                 .ExecutableQuery(query)
@@ -187,6 +206,25 @@ namespace NBPNeo4J.Repositories
                 Latitude = record["Latitude"].As<double>(),
                 Longitude = record["Longitude"].As<double>()
             }).ToList();
+
+            for(int i =0; i<queryResults.Count; i++)
+            {
+                var relationship = queryResults[i]["Relationship"].As<IRelationship>();
+                var connectedHubNode = queryResults[i]["Hub"].As<INode>();
+
+                Hub connectedHub = new Hub
+                {
+                    Id = connectedHubNode["Id"].As<string>(),
+                    Name = connectedHubNode["Name"].As<string>(),
+                    Address = connectedHubNode["Address"].As<string>(),
+                    City = connectedHubNode["City"].As<string>(),
+                    Latitude = connectedHubNode["Latitude"].As<double>(),
+                    Longitude = connectedHubNode["Longitude"].As<double>()
+                };
+
+                serviceStations[i].ConnectedHub = new ServiceConnectedToHub<Hub>(connectedHub, relationship["Distance"].As<double>());
+            }
+
 
             return serviceStations;
         }
@@ -208,6 +246,19 @@ namespace NBPNeo4J.Repositories
                 .ExecutableQuery(query)
                 .WithParameters(parameters)
                 .ExecuteAsync();
+        }
+
+        public async Task DisconnectServiceFromHub(string serviceStationId)
+        {
+            string query = @"
+                MATCH (s:ServiceStation { Id: $ServiceStationId })-[r:SERVICE_CONNECTED_TO_HUB]->(h:Hub)
+                DELETE r";
+            var parameters = new { ServiceStationId = serviceStationId };
+            await _driver
+                .ExecutableQuery(query)
+                .WithParameters(parameters)
+                .ExecuteAsync();
+
         }
 
 

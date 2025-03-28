@@ -6,4 +6,5 @@ export interface ServiceInterface {
   longitude: number;
   latitude: number;
   connectedToHubId: string;
+  hubDistance: number;
 }

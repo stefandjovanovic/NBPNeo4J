@@ -1,8 +1,9 @@
-import {Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Component, ElementRef, EventEmitter, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Map, MapStyle, config, Marker} from '@maptiler/sdk';
 import {NetworkService} from "../../services/network.service";
 import {HubInterface} from "../../interfaces/hub.interface";
 import {Subscription} from "rxjs";
+import {ServiceInterface} from "../../interfaces/service.interface";
 
 
 @Component({
@@ -12,21 +13,25 @@ import {Subscription} from "rxjs";
     standalone: false
 })
 export class NetworkMapComponent implements OnInit, OnDestroy{
-  map: Map | undefined;
   hubs: HubInterface[] = [];
   hubsSubscription: Subscription = new Subscription();
+
+  services: ServiceInterface[] = [];
+  servicesSubscription: Subscription = new Subscription();
 
   connectedHubs: {
     start: {longitude: number, latitude: number, id: string},
     end: {longitude: number, latitude: number, id: string}
   }[] = [];
 
+  connectedServices: {
+    start: {longitude: number, latitude: number, id: string},
+    end: {longitude: number, latitude: number, id: string}
+  }[] = [];
+
+  hubsLoaded: boolean = false;
 
 
-
-
-  @ViewChild('map')
-  private mapContainer!: ElementRef<HTMLElement>;
 
   constructor(private networkService: NetworkService) {
   }
@@ -34,25 +39,35 @@ export class NetworkMapComponent implements OnInit, OnDestroy{
   ngOnInit() {
     this.hubsSubscription = this.networkService.hubsChanged.subscribe((hubs: HubInterface[]) => {
       this.hubs = hubs;
-
       this.connectHubs(hubs);
-
-      console.log(this.connectedHubs);
-
+      this.hubsLoaded = true;
+      this.connectServices();
     });
+
+    this.servicesSubscription = this.networkService.servicesChanged.subscribe(services => {
+      this.services = services;
+      this.connectServices();
+    })
+
     this.networkService.getHubs();
-
-
+    this.networkService.getServices();
   }
 
   ngOnDestroy() {
     if (this.hubsSubscription) {
       this.hubsSubscription.unsubscribe();
     }
+    if (this.servicesSubscription) {
+      this.servicesSubscription.unsubscribe();
+    }
   }
 
   onHubClick(hub: HubInterface) {
-    this.networkService.hubSelected.emit(hub);
+    this.networkService.hubSelected.next(hub);
+  }
+
+  onServiceClick(service: ServiceInterface) {
+    this.networkService.serviceSelected.next(service);
   }
 
   private connectHubs(hubs: HubInterface[]) {
@@ -79,6 +94,28 @@ export class NetworkMapComponent implements OnInit, OnDestroy{
 
       });
     });
+  }
+
+  private connectServices() {
+    if(this.hubsLoaded) {
+      this.services.forEach(service => {
+        const connectedHubInformation = this.hubs.find((hub) => hub.id === service.connectedToHubId);
+        if (connectedHubInformation) {
+          this.connectedServices.push({
+            start: {
+              longitude: connectedHubInformation.longitude,
+              latitude: connectedHubInformation.latitude,
+              id: connectedHubInformation.id
+            },
+            end: {
+              longitude: service.longitude,
+              latitude: service.latitude,
+              id: service.id
+            }
+          });
+        }
+      })
+    }
   }
 
 

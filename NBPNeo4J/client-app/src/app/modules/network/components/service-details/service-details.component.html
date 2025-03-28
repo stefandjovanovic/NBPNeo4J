@@ -1,1 +1,18 @@
-<p>service-details works!</p>
+<div *ngIf="selectedService" class="detail-card">
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>{{selectedService.name}}</mat-card-title>
+      <mat-card-subtitle>{{selectedService.address}}, {{selectedService.city}}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-divider></mat-divider>
+    <mat-card-content>
+      <p></p>
+      <p>Connected to hub:</p>
+      <p>{{hubName}}: {{selectedService.hubDistance | number:'1.0-2'}} km</p>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-button color="primary" [routerLink]="['/network/service/update', selectedService.id]">Edit</button>
+      <button mat-button color="warn" (click)="deleteService(selectedService.id)">Delete</button>
+    </mat-card-actions>
+  </mat-card>
+</div>

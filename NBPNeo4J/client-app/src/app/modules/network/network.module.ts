@@ -28,6 +28,7 @@ import { UpdateServiceComponent } from './components/update-service/update-servi
 import { ServiceDetailsComponent } from './components/service-details/service-details.component';
 import { DeleteDialogComponent } from './components/delete-dialog/delete-dialog.component';
 import {MatDialogModule} from "@angular/material/dialog";
+import {MatDividerModule} from "@angular/material/divider";
 
 
 
@@ -63,7 +64,8 @@ import {MatDialogModule} from "@angular/material/dialog";
     LayerComponent,
     GeoJSONSourceComponent,
     FeatureComponent,
-    MatDialogModule
+    MatDialogModule,
+    MatDividerModule
   ]
 })
 export class NetworkModule { }

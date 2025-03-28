@@ -4,4 +4,5 @@ export interface ServiceCreateInterface{
   address: string;
   longitude: number;
   latitude: number;
+  hubId: string;
 }

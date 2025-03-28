@@ -4,7 +4,9 @@
       <mat-card-title>{{selectedHub.name}}</mat-card-title>
       <mat-card-subtitle>{{selectedHub.address}}, {{selectedHub.city}}</mat-card-subtitle>
     </mat-card-header>
+    <mat-divider></mat-divider>
     <mat-card-content>
+      <p></p>
       <p>Connected to:</p>
       <div *ngFor="let hub of selectedHub.connectedHubs">
         <p>{{hub.name}}: {{hub.distance | number:'1.0-2'}} km</p>

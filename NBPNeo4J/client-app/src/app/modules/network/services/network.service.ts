@@ -2,7 +2,7 @@ import {EventEmitter, Injectable, OnDestroy, OnInit} from '@angular/core';
 import {HubInterface} from "../interfaces/hub.interface";
 import { HttpClient } from "@angular/common/http";
 import {MatSnackBar} from "@angular/material/snack-bar";
-import {Subject} from "rxjs";
+import {BehaviorSubject, Subject} from "rxjs";
 import {HubCreateInterface} from "../interfaces/hub-create.interface";
 import {Router} from "@angular/router";
 import {ServiceInterface} from "../interfaces/service.interface";
@@ -19,8 +19,8 @@ export class NetworkService{
   servicesChanged: Subject<ServiceInterface[]> = new Subject<ServiceInterface[]>();
 
 
-  hubSelected: EventEmitter<HubInterface> = new EventEmitter<HubInterface>();
-  serviceSelected: EventEmitter<ServiceInterface> = new EventEmitter<ServiceInterface>();
+  hubSelected: BehaviorSubject<HubInterface> = new BehaviorSubject<HubInterface>(null);
+  serviceSelected: BehaviorSubject<ServiceInterface> = new BehaviorSubject<ServiceInterface>(null);
 
 
   private hubUrl = 'https://localhost:7255/api/hub';
@@ -47,6 +47,8 @@ export class NetworkService{
     this.http.post<HubInterface>(this.hubUrl+'/create', hub).subscribe((createdHub) => {
       this.hubs.push(createdHub);
       this.hubsChanged.next(this.hubs.slice());
+      this.hubSelected.next(null);
+      this.serviceSelected.next(null);
       this.snackBar.open('Hub created', 'Close', {
         duration: 2000,
       });
@@ -59,6 +61,8 @@ export class NetworkService{
       const index = this.hubs.findIndex((h) => h.id === updatedHub.id);
       this.hubs[index] = updatedHub;
       this.hubsChanged.next(this.hubs.slice());
+      this.hubSelected.next(null);
+      this.serviceSelected.next(null);
       this.snackBar.open('Hub updated', 'Close', {
         duration: 2000,
       });
@@ -71,6 +75,8 @@ export class NetworkService{
       const index = this.hubs.findIndex((h) => h.id === hubId);
       this.hubs.splice(index, 1);
       this.hubsChanged.next(this.hubs.slice());
+      this.hubSelected.next(null);
+      this.serviceSelected.next(null);
       this.snackBar.open('Hub deleted', 'Close', {
         duration: 2000,
       });
@@ -96,27 +102,30 @@ export class NetworkService{
     }
   }
 
-  createService(service: ServiceCreateInterface, connectedHubId: string){
+  getService(serviceId: string){
+    return this.services.find((service) => service.id === serviceId);
+  }
+
+  createService(service: ServiceCreateInterface){
     this.http.post<ServiceInterface>(this.serviceUrl+'/create', service).subscribe((createdService) => {
-      this.http.post(`${this.serviceUrl}/${createdService.id}/connect-to-hub/${connectedHubId}`, {}).subscribe(() => {
-        createdService.connectedToHubId = connectedHubId;
         this.services.push(createdService);
         this.servicesChanged.next(this.services.slice());
+      this.hubSelected.next(null);
+      this.serviceSelected.next(null);
         this.snackBar.open('Service created', 'Close', {
           duration: 2000,
         });
         this.router.navigate(['/network']);
-      });
-
     });
   }
 
-  updateService(service: ServiceCreateInterface, serviceId: string, connectedHubId: string){
+  updateService(service: ServiceCreateInterface, serviceId: string){
     this.http.put<ServiceInterface>(this.serviceUrl+'/update/'+serviceId, service).subscribe((updatedService) => {
-
       const index = this.services.findIndex((s) => s.id === updatedService.id);
       this.services[index] = updatedService;
       this.servicesChanged.next(this.services.slice());
+      this.hubSelected.next(null);
+      this.serviceSelected.next(null);
       this.snackBar.open('Service updated', 'Close', {
         duration: 2000,
       });
@@ -129,10 +138,17 @@ export class NetworkService{
       const index = this.services.findIndex((s) => s.id === serviceId);
       this.services.splice(index, 1);
       this.servicesChanged.next(this.services.slice());
+      this.hubSelected.next(null);
+      this.serviceSelected.next(null);
       this.snackBar.open('Service deleted', 'Close', {
         duration: 2000,
       });
     });
+  }
+
+  getHubName(hubId: string){
+    const hub = this.hubs.find((h) => h.id === hubId);
+    return hub.name;
   }
 
 

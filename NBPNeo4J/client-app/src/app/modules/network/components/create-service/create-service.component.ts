@@ -54,9 +54,9 @@ export class CreateServiceComponent implements OnInit, OnDestroy{
       address: form.value.address,
       longitude: form.value.longitude,
       latitude: form.value.latitude,
+      hubId: this.selectedHubId
     }
-    console.log(service);
-    console.log(this.selectedHubId);
+    this.networkService.createService(service);
   }
 
 

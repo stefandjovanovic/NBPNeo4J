@@ -19,6 +19,18 @@
 
       </div>
 
+
+      <div *ngFor="let service of services">
+        <mgl-marker [lngLat]="[service.longitude, service.latitude]">
+          <div
+            (click)="onServiceClick(service)"
+            class="marker, court-icon"
+            [style.backgroundImage]="'url(assets/service.png)'"
+          ></div>
+        </mgl-marker>
+
+      </div>
+
       <div *ngFor="let hubLine of connectedHubs">
         <mgl-geojson-source id="{{hubLine.start.id}}-{{hubLine.end.id}}">
           <mgl-feature [geometry]="{
@@ -40,6 +52,33 @@
           }"
           [paint]="{
             'line-color': '#888',
+            'line-width': 6
+          }">
+        </mgl-layer>
+      </div>
+
+
+      <div *ngFor="let serviceLine of connectedServices">
+        <mgl-geojson-source id="{{serviceLine.start.id}}-{{serviceLine.end.id}}">
+          <mgl-feature [geometry]="{
+            type: 'LineString',
+            coordinates: [
+              [serviceLine.start.longitude, serviceLine.start.latitude],
+              [serviceLine.end.longitude, serviceLine.end.latitude]
+            ]
+          }"></mgl-feature>
+        </mgl-geojson-source>
+
+        <mgl-layer
+          id="{{serviceLine.start.id}}-{{serviceLine.end.id}}"
+          type="line"
+          source="{{serviceLine.start.id}}-{{serviceLine.end.id}}"
+          [layout]="{
+            'line-cap': 'round',
+            'line-join': 'round'
+          }"
+          [paint]="{
+            'line-color': '#349eeb',
             'line-width': 6
           }">
         </mgl-layer>

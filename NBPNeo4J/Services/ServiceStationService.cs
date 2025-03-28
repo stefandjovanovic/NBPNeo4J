@@ -46,6 +46,8 @@ namespace NBPNeo4J.Services
             
             await _serviceStationRepository.CreateServiceStationAsync(service);
 
+            double distance = 0;
+
             if (!string.IsNullOrEmpty(serviceDto.HubId))
             {
                 Hub connectedHub = await _hubRepository.GetHubAsync(serviceDto.HubId);
@@ -56,7 +58,7 @@ namespace NBPNeo4J.Services
 
                 try
                 {
-                    double distance = CalculateDistance(service, connectedHub);
+                    distance = CalculateDistance(service, connectedHub);
 
                     
                     await _serviceStationRepository.ConnectServiceToHub(service.Id, connectedHub.Id, distance);
@@ -74,7 +76,9 @@ namespace NBPNeo4J.Services
                 Address = service.Address,
                 City = service.City,
                 Latitude = service.Latitude,
-                Longitude = service.Longitude
+                Longitude = service.Longitude,
+                ConnectedToHubId = serviceDto.HubId,
+                HubDistance = distance,
             };
         }
 
@@ -91,6 +95,30 @@ namespace NBPNeo4J.Services
             };
             ServiceStation updatedServiceStation = await _serviceStationRepository.UpdateServiceStationAsync(serviceStation);
 
+            double distance = 0;
+
+            if (!string.IsNullOrEmpty(createServiceDTO.HubId))
+            {
+                Hub connectedHub = await _hubRepository.GetHubAsync(createServiceDTO.HubId);
+                if (connectedHub == null)
+                {
+                    throw new Exception("Hub not found");
+                }
+
+                try
+                {
+                    distance = CalculateDistance(serviceStation, connectedHub);
+
+                    await _serviceStationRepository.DisconnectServiceFromHub(serviceStation.Id);    
+
+                    await _serviceStationRepository.ConnectServiceToHub(serviceStation.Id, connectedHub.Id, distance);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Service created, but failed to connect to hub: {ex.Message}");
+                }
+            }
+
             ReturnServiceDTO returnServiceDTO = new ReturnServiceDTO();
             returnServiceDTO.Id = updatedServiceStation.Id;
             returnServiceDTO.Name = updatedServiceStation.Name;
@@ -98,6 +126,8 @@ namespace NBPNeo4J.Services
             returnServiceDTO.City = updatedServiceStation.City;
             returnServiceDTO.Latitude = updatedServiceStation.Latitude;
             returnServiceDTO.Longitude = updatedServiceStation.Longitude;
+            returnServiceDTO.ConnectedToHubId = createServiceDTO.HubId;
+            returnServiceDTO.HubDistance = distance;
 
             return returnServiceDTO;
         }
@@ -117,6 +147,8 @@ namespace NBPNeo4J.Services
             returnServiceDTO.City = serviceStation.City;
             returnServiceDTO.Latitude = serviceStation.Latitude;
             returnServiceDTO.Longitude = serviceStation.Longitude;
+            returnServiceDTO.ConnectedToHubId = serviceStation.ConnectedHub.Target.Id;
+            returnServiceDTO.HubDistance= serviceStation.ConnectedHub.Distance;
             return returnServiceDTO;
         }
 
@@ -133,6 +165,8 @@ namespace NBPNeo4J.Services
                 returnServiceDTO.City = serviceStation.City;
                 returnServiceDTO.Latitude = serviceStation.Latitude;
                 returnServiceDTO.Longitude = serviceStation.Longitude;
+                returnServiceDTO.ConnectedToHubId = serviceStation.ConnectedHub.Target.Id;
+                returnServiceDTO.HubDistance = serviceStation.ConnectedHub.Distance;
                 returnServiceDTOs.Add(returnServiceDTO);
             }
             return returnServiceDTOs;

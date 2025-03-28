@@ -3,6 +3,7 @@
     <app-network-map></app-network-map>
   </mat-grid-tile>
   <mat-grid-tile>
-    <app-hub-details></app-hub-details>
+    <app-hub-details *ngIf="displayHub"></app-hub-details>
+    <app-service-details *ngIf="displayService"></app-service-details>
   </mat-grid-tile>
 </mat-grid-list>
